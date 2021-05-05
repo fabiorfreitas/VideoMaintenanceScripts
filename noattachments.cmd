@@ -5,7 +5,7 @@ for /r %%g in (*.mkv) do (
             echo "%%g" has no attachments
 		) else (
             echo "%%g"
-            mkvpropedit "%%~fg" --delete-attachment mime-type:image/jpeg
+            mkvpropedit "%%~fg" --delete-attachment mime-type:image/jpeg --chapters ""
             mkvpropedit "%%~fg" --delete-attachment mime-type:application/x-truetype-font
             mkvpropedit "%%~fg" --delete-attachment mime-type:application/vnd.ms-opentype
 	        )

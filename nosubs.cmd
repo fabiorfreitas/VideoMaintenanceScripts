@@ -6,7 +6,7 @@ for /r %%a in (*.mkv) do (
         ) else (
             echo.
             echo "%%a" has subtitles
-            mkvmerge -q -o "%%~dpna.nosubs%%~xa" -S -M "%%a"
+            mkvmerge -q -o "%%~dpna.nosubs%%~xa" -S -M --no-chapters "%%a"
             if errorlevel 1 (
                 echo Warnings/errors generated during remuxing, original file not deleted
             ) else (
