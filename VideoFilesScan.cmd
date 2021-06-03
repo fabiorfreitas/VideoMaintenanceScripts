@@ -1,9 +1,11 @@
 @echo off
 setlocal EnableDelayedExpansion
 for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
-    if /i not %%~xa==mkv (
-        mkvmerge -o "%%~pna.mkv" -S -M -T --no-global-tags --no-chapters "%%~a"
-	    if errorlevel 1 (
+    echo ---
+    if /i not "%%~xa" == ".mkv" (
+        mkvmerge -q -o "%%~pna.mkv" -S -M -T --no-global-tags --no-chapters "%%~a"
+	    echo mkvmerge
+        if errorlevel 1 (
             echo Warnings/errors generated during remuxing, original file not deleted
         ) else (
             del "%%~a"
@@ -14,13 +16,15 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
         )
         for /f %%c in ('echo !info! ^| find /c /i "subtitles"') do (
             if [%%c]==[0] (
-                for /f %%c in ('mkvmerge -i "%%g" ^| findstr /R /C:"[0-9s]: [0-9]" /C:"bytes" ^| find /c /v ""') do (
+                echo %%a has no subtitles
+                for /f %%c in ('echo !info! ^| findstr /R /C:"[0-9s]: [0-9]" /C:"bytes" ^| find /c /v ""') do (
 			        if [%%c]==[0] (
-			            echo "%%g" has no extras
+			            echo "%%a" has no extras
 				    ) else (
-				        echo "%%g"
-					    mkvpropedit "%%~fg" --tags all: --chapters ""
-					)
+                        mkvpropedit "%%~fa" --delete-attachment mime-type:image/jpeg --chapters "" --tags all:
+                        mkvpropedit "%%~fa" --delete-attachment mime-type:application/x-truetype-font
+                        mkvpropedit "%%~fa" --delete-attachment mime-type:application/vnd.ms-opentype
+                    )
 		    )
 
             ) else (
@@ -35,5 +39,7 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
             )
 
         )
-    ) 
+    )
+    echo --- 
 )
+cmd /k
