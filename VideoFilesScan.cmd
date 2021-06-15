@@ -1,5 +1,10 @@
-@echo off
+::@echo off
+chcp 65001
 setlocal EnableDelayedExpansion
+set linebreak=^
+
+
+REM linebreak
 for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
     echo ---
     if /i not "%%~xa" == ".mkv" (
@@ -11,19 +16,21 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
             del "%%~a"
         )
     ) else (
-        for /f "delims=" %%b in ('mkvmerge -i "%%a"') do (
-            set "info=%%b"
+        set "info="
+        for /f "delims=" %%b in ('mkvmerge --ui-language en -i "%%a"') do (
+            if defined info set "info=!info!!linebreak!"
+            set "info=!info!%%b"
         )
-        for /f %%c in ('echo !info! ^| find /c /i "subtitles"') do (
+        for /f %%c in ('^(for /L %%m in ^(1 1 !info_count!^) do echo !info[%%m]!^) ^| find /c /i "subtitles"') do (
             if [%%c]==[0] (
                 echo %%a has no subtitles
-                for /f %%c in ('echo !info! ^| findstr /R /C:"[0-9s]: [0-9]" /C:"bytes" ^| find /c /v ""') do (
-			        if [%%c]==[0] (
+                for /f %%d in ('echo !info!^| findstr /R /C:"[0-9s]: [0-9]" /C:"bytes"^| find /c /v ""') do (
+			        if [%%d]==[0] (
 			            echo "%%a" has no extras
 				    ) else (
-                        mkvpropedit "%%~fa" --delete-attachment mime-type:image/jpeg --chapters "" --tags all:
-                        mkvpropedit "%%~fa" --delete-attachment mime-type:application/x-truetype-font
-                        mkvpropedit "%%~fa" --delete-attachment mime-type:application/vnd.ms-opentype
+                        for /l %%e in (1,1,%%d) do (
+                            mkvpropedit "%%~fa" --delete-attachment 1 --chapters "" --tags all:
+                        )
                     )
 		    )
 
@@ -35,7 +42,6 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
                     del /f "%%a"
 				    ren "%%~dpna.nosubs%%~xa" "%%~nxa"
                 )
-                echo.
             )
 
         )
