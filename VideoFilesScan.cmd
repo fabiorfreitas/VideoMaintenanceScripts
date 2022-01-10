@@ -18,7 +18,7 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
         call :mkvmergeinfoloop "%%a"
     )
 )
-goto :eof
+cmd /k
 
 :mkvmergeinfoloop
 setlocal EnableExtensions DisableDelayedExpansion
