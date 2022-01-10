@@ -1,57 +1,58 @@
 @echo off
 chcp 65001
-setlocal EnableDelayedExpansion
-set LF=^
-
-
-REM The two empty lines are required here
+setlocal EnableExtensions DisableDelayedExpansion
 for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
-    echo ---
-    echo processing "%%a"
+    echo ###
+    echo Processing "%%a"
     if /i not "%%~xa" == ".mkv" (
-        mkvmerge -q -o "%%~pna.mkv" -S -M -T -B --no-global-tags --no-chapters "%%~a"
+        mkvmerge -o "%%~pna.mkv" -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%~a"
         if errorlevel 1 (
             echo Warnings/errors generated during remuxing, original file not deleted
-            mkvmerge -i --ui-language en "%aa">>errors.txt
+            mkvmerge -i --ui-language en "%%a">>errors.txt
+            del "%%~pna.mkv"
         ) else (
+            echo Deleting old file
             del "%%~a"
         )
     ) else (
-        set "mkvmergeinfo="
-        for /f "delims=" %%b in ('mkvmerge --ui-language en -i "%%a"') do (
-            if defined mkvmergeinfo set "mkvmergeinfo=!mkvmergeinfo!!LF!"
-            set "mkvmergeinfo=!mkvmergeinfo!%%b"
-        )
-        echo !mkvmergeinfo!
-        for /f "usebackq delims= eol=$" %%c in (`echo !mkvmergeinfo! ^| find /c /i "subtitles"`) do (
-            echo --
-            echo %%c
-            echo --
-            if [%%c]==[0] (
-                echo %%a has no subtitles
-                for /f %%d in ('^(for /L %%n in ^(1 1 !info_count!^) do echo !info[%%n]!^)^| findstr "chapter bytes"') do (
-			        if [%%d]==[] (
-			            echo "%%a" has no extras
-				    ) else (
-                        echo "%%a" has extras
-                        for /l %%e in (1,1,%%d) do (
-                            mkvpropedit "%%~fa" --delete-attachment 1 --chapters "" --tags all:
-                        )
-                    )
-		        )
-
-            ) else (
-                mkvmerge -o "%%~dpna.nosubs%%~xa" -S -M -T --no-global-tags --no-chapters "%%a"
-                if errorlevel 1 (
-                    echo Warnings/errors generated during remuxing, original file not deleted
-                ) else (
-                    del /f "%%a"
-				    ren "%%~dpna.nosubs%%~xa" "%%~nxa"
-                )
-            )
-
-        )
+        call :mkvmergeinfoloop "%%a"
     )
-    echo --- 
 )
-cmd /k
+goto :eof
+
+:mkvmergeinfoloop
+setlocal EnableExtensions DisableDelayedExpansion
+for /f "delims=" %%l in ('mkvmerge -i "%~1" --ui-language en') do (
+    for /f "tokens=1,4 delims=:( " %%t in ("%%l") do (
+        if /i "%%u" == "subtitles" (
+            echo ###
+            echo "%~1" has subtitles
+            mkvmerge -o "%~dpn1.nosubs%~x1" -S -M -T -B --no-global-tags --no-chapters --ui-language en "%~1"
+            if errorlevel 1 (
+                echo ###
+                echo Warnings/errors generated during remuxing, original file not deleted, check errors.txt
+                mkvmerge -i --ui-language en "%~1">>errors.txt
+                del "%~dpn1.nosubs%~x1"
+            ) else (
+				echo Deleting old file
+                del /f "%~1"
+				echo Renaming new file
+				ren "%~dpn1.nosubs%~x1" "%~nx1"
+            )
+            goto :eof
+        )
+        if "%%t" == "Attachment" set propedit=1
+        if "%%t" == "Global" set propedit=1
+        if "%%t" == "Chapter" set propedit=1
+    )
+    if defined propedit (
+        echo ###
+        echo "%~1" has extras
+        mkvpropedit "%~f1" --delete-attachment mime-type:image/jpeg --chapters "" --tags all:
+        mkvpropedit "%~f1" --delete-attachment mime-type:application/x-truetype-font
+        mkvpropedit "%~f1" --delete-attachment mime-type:application/vnd.ms-opentype
+        goto :eof       
+    )
+)
+endlocal
+goto :eof
