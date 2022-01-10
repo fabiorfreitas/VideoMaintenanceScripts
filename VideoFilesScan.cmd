@@ -21,9 +21,20 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
 cmd /k
 
 :mkvmerge.exeinfoloop
-setlocal EnableExtensions DisableDelayedExpansion
+setlocal EnableExtensions EnableDelayedExpansion
 for /f "delims=" %%l in ('mkvmerge.exe -i "%~1" --ui-language en') do (
     for /f "tokens=1,4 delims=:( " %%t in ("%%l") do (
+        if /i "%%u" == "audio" (
+            if not defined audiotracks (
+                set /a "audiotracks=1"
+            ) else (
+                set /a "audiotracks+=1"
+            )
+            if !audiotracks! GTR 1 (
+                mkvmerge.exe -i "%~1" --ui-language en >> extratracks.cmd
+            )
+        )
+        
         if /i "%%u" == "subtitles" (
             echo ###
             echo "%~1" has subtitles
@@ -41,9 +52,9 @@ for /f "delims=" %%l in ('mkvmerge.exe -i "%~1" --ui-language en') do (
             )
             goto :eof
         )
-        if "%%t" == "Attachment" set propedit=1
-        if "%%t" == "Global" set propedit=1
-        if "%%t" == "Chapter" set propedit=1
+        if /i "%%t" == "Attachment" set propedit=1
+        if /i "%%t" == "Global" set propedit=1
+        if /i "%%t" == "Chapter" set propedit=1
     )
     if defined propedit (
         echo ###
