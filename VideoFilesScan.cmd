@@ -15,7 +15,7 @@ for /r %%a in (*.mkv *.mp4 *.avi *.mov) do (
             del "%%~a"
         )
     ) else (
-        call :mkvmergeinfoloop "%%a" "%%~fa"
+        call :mkvmergeinfoloop "%%~a" "%%~fa"
     )
 )
 cmd /k
@@ -31,7 +31,7 @@ for /f "delims=" %%l in ('mkvmerge.exe -i "%~1" --ui-language en') do (
                 set /a "audiotracks+=1"
             )
             if !audiotracks! EQU 2 (
-                echo %~2 >> ExtraTracksList.txt
+                echo "%~2" >> ExtraTracksList.txt
             )
         )
         if /i "%%u" == "subtitles" (

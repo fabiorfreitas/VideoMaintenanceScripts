@@ -1,15 +1,15 @@
 @echo off
 chcp 65001
 for /f "delims=" %%a in (ExtraTracksList.txt) do (
-    mkvmerge.exe -o "%%~dpna.oneaudio%%~xa" -a 1 -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%~a"
+    mkvmerge.exe -o "%%~dpna.oneaudio%%~xa" -a 1 -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%~nxa"
     if errorlevel 1 (
         echo ###
         echo Warnings/errors generated during remuxing, original file not deleted, check errors.txt
-        mkvmerge.exe -i --ui-language en "%%~a" >> Errors.txt
+        mkvmerge.exe -i --ui-language en "%%~nxa" >> Errors.txt
         del "%%~dpna.oneaudio%%~xa"
     ) else (
     	echo Deleting old file
-        del /f "%%~a"
+        del /f "%%~nxa"
     	echo Renaming new file
     	ren "%%~dpna.oneaudio%%~xa" "%%~nxa"
     )
