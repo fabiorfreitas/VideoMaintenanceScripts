@@ -30,11 +30,10 @@ for /f "delims=" %%l in ('mkvmerge.exe -i "%~1" --ui-language en') do (
             ) else (
                 set /a "audiotracks+=1"
             )
-            if !audiotracks! EQU 1 (
+            if !audiotracks! EQU 2 (
                 echo %~2 >> ExtraTracksList.txt
             )
         )
-        
         if /i "%%u" == "subtitles" (
             echo ###
             echo "%~1" has subtitles
@@ -84,8 +83,6 @@ if defined propeditcmd (
     echo ###
     echo "%~1" has extras
     mkvpropedit.exe "%~f1" !propeditcmd!
-    endlocal
-    goto :eof       
 )
 endlocal
 goto :eof
