@@ -27,15 +27,15 @@ for /F "tokens=*" %%G in ('%SystemRoot%\System32\chcp.com') do for %%H in (%%G) 
     for /f "delims=" %%G in (ExtraTracksList.txt) do (
     echo --^> Processing file "%%G" ...
     mkvmerge.exe -o "%%~dpnG.oneaudio%%~xG" -a 1 -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%~fG"
-    if %errorlevel% NEQ 0 (
-        echo Warnings/errors generated during remuxing, original file not deleted, check errors.txt
-        mkvmerge.exe -i --ui-language en "%%~fG" >> Errors.txt
-        del "%%~dpnG.oneaudio%%~xG" 2>nul
-    ) else (
+    if not errorlevel 1 (
     	echo --^> Deleting old file
         del /f "%%~fG"
     	echo --^> Renaming new file
     	ren "%%~dpnG.oneaudio%%~xG" "%%~nxG"
+    ) else (
+        echo Warnings/errors generated during remuxing, original file not deleted, check errors.txt
+        mkvmerge.exe -i --ui-language en "%%~fG" >> Errors.txt
+        del "%%~dpnG.oneaudio%%~xG" 2>nul
     )
     echo.
     echo ##########

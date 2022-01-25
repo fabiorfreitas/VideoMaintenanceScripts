@@ -32,25 +32,25 @@ set "CodePage="
 for /F "delims=" %%G in ('dir *.mkv /A-D-H /B /S 2^>nul') do (
     echo --^> Processing file "%%G" ...
     setlocal
-    set "FileName=%%G"
+    set "FullFileName=%%G"
     for /F "tokens=1,4 delims=: " %%H in ('^""%ToolsPath%\mkvmerge.exe" -i "%%G" --ui-language en^"') do (
         if /I "%%I" == "audio" (
             set /A AudioTracks+=1
             setlocal EnableDelayedExpansion
-            if !AudioTracks! == 2 echo !FileName!>>ExtraTracksList.txt
+            if !AudioTracks! == 2 echo !FullFileName!>>ExtraTracksList.txt
             endlocal
         ) else if /I "%%I" == "subtitles" (
-            echo --^> %%~nxG has subtitles
+            echo --^> "%%~nxG" has subtitles
             "%ToolsPath%\mkvmerge.exe" -o "%%~dpnG.nosubs%%~xG" -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%G"
-            if %errorlevel% NEQ 0 (
-                echo Warnings/errors generated during remuxing, original file not deleted, check Errors.txt
-                "%ToolsPath%\mkvmerge.exe" -i --ui-language en "%%G">>Errors.txt
-                del "%%~dpnG.nosubs%%~xG" 2>nul
-            ) else (
+            if not errorlevel 1 (
                 echo --^> Deleting old file ...
                 del /F "%%G"
                 echo --^> Renaming new file ...
                 ren "%%~dpnG.nosubs%%~xG" "%%~nxG"
+            ) else (
+                echo Warnings/errors generated during remuxing, original file not deleted, check Errors.txt
+                "%ToolsPath%\mkvmerge.exe" -i --ui-language en "%%G">>Errors.txt
+                del "%%~dpnG.nosubs%%~xG" 2>nul
             )
             set "SkipFile=1"
         ) else if /I "%%H" == "Attachment"  (
@@ -62,6 +62,7 @@ for /F "delims=" %%G in ('dir *.mkv /A-D-H /B /S 2^>nul') do (
         )
     )
     if not defined SkipFile (
+        set "OnlyFileName=%%~nxG"
         setlocal EnableDelayedExpansion
         if defined Attachments (
             set "PropEditOptions= --delete-attachment 1"
@@ -70,8 +71,8 @@ for /F "delims=" %%G in ('dir *.mkv /A-D-H /B /S 2^>nul') do (
         if defined TagsAll set "PropEditOptions=!PropEditOptions! !TagsAll!"
         if defined Chapters set "PropEditOptions=!PropEditOptions! !Chapters!"
         if defined PropEditOptions (
-            echo --^> "%%~nxG" has extras
-            "%ToolsPath%\mkvpropedit.exe" "!FileName!"!PropEditOptions!
+            echo --^> "!OnlyFileName!" has extras ...
+            "%ToolsPath%\mkvpropedit.exe" "!FullFileName!"!PropEditOptions!
         )
         endlocal
     )
@@ -81,16 +82,15 @@ for /F "delims=" %%G in ('dir *.mkv /A-D-H /B /S 2^>nul') do (
     endlocal
 )
 for /F "delims=" %%G in ('dir *.avi *.mp4 *.mov /A-D-H /B /S 2^>nul') do (
-    echo.
     echo Processing file "%%G" ...
     "%ToolsPath%\mkvmerge.exe" -o "%%~dpnG.mkv" -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%G"
-    if %errorlevel% NEQ 0 (
+    if not errorlevel 1 (
+        echo --^> Deleting old file ...
+        del /F "%%G"
+    ) else (
         echo --^> Warnings/errors generated during remuxing, original file not deleted.
         "%ToolsPath%\mkvmerge.exe" -i --ui-language en "%%G">>Errors.txt
         del "%%~dpnG.mkv" 2>nul
-    ) else (
-        echo --^> Deleting old file ...
-        del /F "%%G"
     )
     echo.
     echo ##########
