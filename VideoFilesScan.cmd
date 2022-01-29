@@ -39,7 +39,7 @@ for /F "delims=" %%G in ('dir *.mkv /A-D-H /B /S 2^>nul') do (
             setlocal EnableDelayedExpansion
             if !AudioTracks! == 2 echo !FullFileName!>>ExtraTracksList.txt
             endlocal
-        ) else if /I "%%I" == "subtitles" (
+        ) else if /I "%%I" == "subtitles" if not defined SkipFile (
             echo --^> "%%~nxG" has subtitles
             "%ToolsPath%\mkvmerge.exe" -o "%%~dpnG.nosubs%%~xG" -S -M -T -B --no-global-tags --no-chapters --ui-language en "%%G"
             if not errorlevel 1 (
